@@ -1,0 +1,7 @@
+.idea/
+external_dlls/*
+!external_dlls/COPY_Assembly-CSharp_dll_HERE
+bin/
+obj/
+Debug/
+Release/
