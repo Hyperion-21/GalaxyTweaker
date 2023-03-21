@@ -93,6 +93,21 @@ namespace GalaxyTweaker
 
         private static void LoadDefinitions(Action<TextAsset> onGalaxyDefinitionLoaded)
         {
+            _logger.LogInfo("File Exists: " + File.Exists(CampaignPath).ToString());
+            _logger.LogInfo("Campaign Exists: " + Game.SaveLoadManager.CampaignExists(Game.SessionManager.ActiveCampaignType, Game.SessionManager.ActiveCampaignName).ToString());
+
+            if (Game.SaveLoadManager.CampaignExists(Game.SessionManager.ActiveCampaignType, Game.SessionManager.ActiveCampaignName) && !File.Exists(CampaignPath))
+            {
+                _logger.LogInfo("USING DEFAULT GALAXYDEFINITION!");
+                GameManager.Instance.Game.Assets.Load<TextAsset>("GalaxyDefinition_Default", asset =>
+                    onGalaxyDefinitionLoaded(new TextAsset(asset.text))
+                );
+                _logger.LogInfo($"Loaded default campaign definition.");
+                return;
+            }
+
+            
+            _logger.LogInfo("Did not return out of default exception. Performing normally.");
             if (!File.Exists(CampaignPath))
             {
                 Directory.CreateDirectory(CampaignDirectory);
@@ -101,7 +116,7 @@ namespace GalaxyTweaker
             }
 
             var jsonFeed = File.ReadAllText(CampaignPath);
-            _logger.LogInfo($"Loaded campaign definition: {DefaultPath}");
+            _logger.LogInfo($"Loaded campaign definition: {CampaignPath}");
             onGalaxyDefinitionLoaded(new TextAsset(jsonFeed));
         }
     }
