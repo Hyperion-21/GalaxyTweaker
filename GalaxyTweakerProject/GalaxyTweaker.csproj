@@ -8,7 +8,7 @@
         <AssemblyName>hyperion_21.mods.galaxy_tweaker</AssemblyName>
         <Product>Galaxy Tweaker</Product>
         <Description>A galaxy configuerer that allows for modification and usage of custom GalaxyDefinition files, allowing users to tweak the galaxy.</Description>
-        <Version>0.0.2</Version>
+        <Version>0.0.3</Version>
         <RestoreAdditionalProjectSources>
             https://api.nuget.org/v3/index.json;
             https://nuget.bepinex.dev/v3/index.json
