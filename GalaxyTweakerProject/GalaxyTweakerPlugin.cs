@@ -10,6 +10,7 @@ using KSP.Game;
 using System.IO;
 using System;
 using SpaceWarp.API.UI;
+using System.Collections.Generic;
 
 namespace GalaxyTweaker
 {
@@ -34,6 +35,8 @@ namespace GalaxyTweaker
 
         public static GalaxyTweakerPlugin Instance { get; set; }
         private static ManualLogSource _logger;
+
+        private static CampaignMenu _campaignMenuInstance = null;
 
         public override void OnPreInitialized()
         {
@@ -67,7 +70,6 @@ namespace GalaxyTweaker
             );
             _logger.LogInfo($"Found config value: {_selectedTarget.Value}");
 
-            windowOpen = true;
             galaxyDefsList.Clear();
             GetGalaxyDefinitions();
         }
@@ -131,13 +133,13 @@ namespace GalaxyTweaker
         /// </summary>
         private void LateUpdate()
         {
-            if (Input.GetKeyDown(KeyCode.G))
+            // Opens and closes window based on if the "Create New Campaign" menu is open.
+            if (_campaignMenuInstance != null)
             {
-                GetGalaxyDefinitions();
-                _isWindowOpen = !_isWindowOpen;
+                _isWindowOpen = _campaignMenuInstance._createCampaignMenu.activeInHierarchy;
             }
         }
-
+        
         /// <summary>
         /// Draws a simple UI window when <code>this._isWindowOpen</code> is set to <code>true</code>.
         /// </summary>
@@ -153,7 +155,7 @@ namespace GalaxyTweaker
                     GUIUtility.GetControlID(FocusType.Passive),
                     _windowRect,
                     FillWindow,
-                    "<color=#FFFF00>// GALAXY TWEAKER</color>",
+                    "<size=40><color=#696DFF>// GALAXY TWEAKER</color></size>",
                     GUILayout.Height(400),
                     GUILayout.Width(600)
                 );
@@ -165,12 +167,14 @@ namespace GalaxyTweaker
         /// <param name="windowID"></param>
         private void FillWindow(int windowID)
         {
-            GUILayout.Label("<size=25>GALAXY SETUP</size>");
+            GUILayout.Space(20);
+            // GUILayout.Label("<size=25>GALAXY SETUP</size>");
             GUILayout.BeginHorizontal();
             GUILayout.Label("Selected Galaxy Definition: ");
             galaxyDefinition = GUILayout.TextField(galaxyDefinition, 45);
             GUILayout.EndHorizontal();
             GUILayout.Space(5);
+            /*
             if (GUILayout.Button("Load Selected Galaxy Definition"))
             {
                 if (File.Exists(galaxyDefFolderLoc + galaxyDefinition))
@@ -178,6 +182,7 @@ namespace GalaxyTweaker
                     loadedFilePath = galaxyDefFolderLoc + galaxyDefinition;
                 }
             }
+            */
 
             GUILayout.Space(5);
 
@@ -190,14 +195,14 @@ namespace GalaxyTweaker
 
             if (galaxyDefsList.Count == 1)
             {
-                GUILayout.Label("<size=20>" + galaxyDefsList.Count + " Galaxy Definition Was Found!</size>");
+                GUILayout.Label("<size=20>Found " + galaxyDefsList.Count + " Galaxy Definition!</size>");
             }
             else
             {
-                GUILayout.Label("<size=20>" + galaxyDefsList.Count + " Galaxy Definitions Were Found!</size>");
+                GUILayout.Label("<size=20>Found " + galaxyDefsList.Count + " Galaxy Definitions!</size>");
             }
             GUILayout.BeginVertical();
-            scrollbarPos = GUILayout.BeginScrollView(scrollbarPos, false, true, GUILayout.Height(125));
+            scrollbarPos = GUILayout.BeginScrollView(scrollbarPos, false, true, GUILayout.Height(213));
             foreach (string galaxyDef in galaxyDefsList)
             {
                 if (GUILayout.Button(galaxyDef))
@@ -208,9 +213,11 @@ namespace GalaxyTweaker
             GUILayout.EndScrollView();
             GUILayout.EndVertical();
 
+            /*
             GUILayout.Space(5);
 
             GUILayout.Label("Press G To Close This Window...");
+            */
 
             GUI.DragWindow(new Rect(0, 0, 10000, 500));
         }
@@ -239,7 +246,16 @@ namespace GalaxyTweaker
             }
         }
 
-        private bool _isWindowOpen;
+        // This "catches" the CampaignMenu instance (because I couldn't figure out how else to do it, will probably be replaced later)
+        [HarmonyPatch(typeof(CampaignMenu), nameof(CampaignMenu.StartNewCampaignMenu))]
+        [HarmonyPrefix]
+        public static bool AutoOpenWindow(CampaignMenu __instance)
+        {
+            _campaignMenuInstance = __instance;
+            return true;
+        }
+
+        private static bool _isWindowOpen;
         private Rect _windowRect;
 
         private string galaxyDefinition = "GalaxyDefinition_Default.json";
