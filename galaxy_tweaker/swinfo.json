@@ -1,10 +1,10 @@
 {
   "mod_id": "galaxy_tweaker",
-  "author": "Hyperion_21, JohnsterSpaceProgram",
+  "author": "Hyperion_21, munix, JohnsterSpaceProgram",
   "name": "Galaxy Tweaker",
   "description": "A galaxy configuerer that allows for modification and usage of custom GalaxyDefinition files, allowing users to tweak the galaxy.",
   "source": "https://github.com/Hyperion-21/GalaxyTweaker",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "version_check": "",
   "dependencies": [
     {
