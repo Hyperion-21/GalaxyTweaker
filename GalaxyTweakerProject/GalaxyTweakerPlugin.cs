@@ -25,11 +25,11 @@ namespace GalaxyTweaker
 
         public static string Path { get; private set; }
 
-        private static ConfigEntry<string> _selectedTarget;
+        private static string _selectedTarget;
 
         private static string DefaultDirectory => $"{Path}/GalaxyDefinitions";
         private static string DefaultPath => $"{Path}/GalaxyDefinitions/GalaxyDefinition_Default.json";
-        private static string ConfigPath => $"{Path}/GalaxyDefinitions/{_selectedTarget.Value}.json";
+        private static string ConfigPath => $"{Path}/GalaxyDefinitions/{_selectedTarget}";
         private static string CampaignDirectory => $"{Path}/saves/{Game.SessionManager.ActiveCampaignName}";
         private static string CampaignPath => $"{CampaignDirectory}/CampaignGalaxyDefinition.json";
 
@@ -62,13 +62,13 @@ namespace GalaxyTweaker
             }
 
             // Fetch a configuration value or create a default one if it does not exist
-            _selectedTarget = Config.Bind(
+            /*_selectedTarget = Config.Bind(
                 "Galaxy Definition Selection",
                 "Selected Galaxy Definition",
                 "GalaxyDefinition_Default",
                 "This is the file that the game will load when creating a new campaign. Inside <KSP2 Install>/BepInEx/plugins/galaxy_tweaker/GalaxyDefinitions is where these files are stored. GalaxyDefinition_Default represents the vanilla KSP2 galaxy, and is automatically regenerated on game load. To load in a custom galaxy definition, copy the default, tweak the values as you wish, and go back here and type in the file name (WITHOUT THE .json), and when you create a new campaign it should automatically load in celestial bodies as you have put them in in the file. If your game is getting stuck at \"Loading Celestial Body Data\" then either the file or this input is wrong!"
             );
-            _logger.LogInfo($"Found config value: {_selectedTarget.Value}");
+            _logger.LogInfo($"Found config value: {_selectedTarget.Value}");*/
 
             galaxyDefsList.Clear();
             GetGalaxyDefinitions();
@@ -133,6 +133,8 @@ namespace GalaxyTweaker
         /// </summary>
         private void LateUpdate()
         {
+            _selectedTarget = galaxyDefinition;
+
             // Opens and closes window based on if the "Create New Campaign" menu is open.
             if (_campaignMenuInstance != null)
             {
@@ -177,9 +179,9 @@ namespace GalaxyTweaker
             /*
             if (GUILayout.Button("Load Selected Galaxy Definition"))
             {
-                if (File.Exists(galaxyDefFolderLoc + galaxyDefinition))
+                if (File.Exists(DefaultDirectory + galaxyDefinition))
                 {
-                    loadedFilePath = galaxyDefFolderLoc + galaxyDefinition;
+                    loadedFilePath = DefaultDirectory + galaxyDefinition;
                 }
             }
             */
@@ -233,7 +235,7 @@ namespace GalaxyTweaker
                 galaxyDefsList.Clear(); //This is done to refresh the list everytime this function is called
             }
 
-            DirectoryInfo galaxyDefFolder = new DirectoryInfo(galaxyDefFolderLoc);
+            DirectoryInfo galaxyDefFolder = new DirectoryInfo(DefaultDirectory);
 
             FileInfo[] galaxyDefInfo = galaxyDefFolder.GetFiles("*" + galaxyDefFileType + "*");
 
@@ -260,9 +262,6 @@ namespace GalaxyTweaker
 
         private string galaxyDefinition = "GalaxyDefinition_Default.json";
         private string galaxyDefFileType = ".json";
-        private string loadedFilePath = "Path/galaxy_tweaker/GalaxyDefinitions/GalaxyDefinition_Selected.json";
-
-        private string galaxyDefFolderLoc = "C:/Program Files (x86)/Steam/steamapps/common/Kerbal Space Program 2/BepInEx/plugins/galaxy_tweaker/GalaxyDefinitions/";
         public List<string> galaxyDefsList = new List<string>();
         private Vector2 scrollbarPos;
     }
