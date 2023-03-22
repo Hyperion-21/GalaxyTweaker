@@ -9,6 +9,7 @@ using KSP.Game.Load;
 using KSP.Game;
 using System.IO;
 using System;
+using SpaceWarp.API.UI;
 
 namespace GalaxyTweaker
 {
@@ -93,6 +94,21 @@ namespace GalaxyTweaker
 
         private static void LoadDefinitions(Action<TextAsset> onGalaxyDefinitionLoaded)
         {
+            _logger.LogInfo("File Exists: " + File.Exists(CampaignPath).ToString());
+            _logger.LogInfo("Campaign Exists: " + Game.SaveLoadManager.CampaignExists(Game.SessionManager.ActiveCampaignType, Game.SessionManager.ActiveCampaignName).ToString());
+
+            if (Game.SaveLoadManager.CampaignExists(Game.SessionManager.ActiveCampaignType, Game.SessionManager.ActiveCampaignName) && !File.Exists(CampaignPath))
+            {
+                _logger.LogInfo("USING DEFAULT GALAXYDEFINITION!");
+                GameManager.Instance.Game.Assets.Load<TextAsset>("GalaxyDefinition_Default", asset =>
+                    onGalaxyDefinitionLoaded(new TextAsset(asset.text))
+                );
+                _logger.LogInfo($"Loaded default campaign definition.");
+                return;
+            }
+
+
+            _logger.LogInfo("Did not return out of default exception. Performing normally.");
             if (!File.Exists(CampaignPath))
             {
                 Directory.CreateDirectory(CampaignDirectory);
@@ -101,8 +117,139 @@ namespace GalaxyTweaker
             }
 
             var jsonFeed = File.ReadAllText(CampaignPath);
-            _logger.LogInfo($"Loaded campaign definition: {DefaultPath}");
+            _logger.LogInfo($"Loaded campaign definition: {CampaignPath}");
             onGalaxyDefinitionLoaded(new TextAsset(jsonFeed));
         }
+
+        //All code below this line has been contributed by JohnsterSpaceProgram. Note: This code is also a WIP.
+        /// <summary>
+        /// Placeholder code for toggling the visibility of the Galaxy Tweaker UI window before the functionality 
+        /// for it opening when starting a new campaign is added by pressing the G key.
+        /// </summary>
+        private void LateUpdate()
+        {
+            if (Input.GetKeyDown(KeyCode.G))
+            {
+                GetGalaxyDefinitions();
+                _isWindowOpen = !_isWindowOpen;
+            }
+        }
+
+        /// <summary>
+        /// Draws a simple UI window when <code>this._isWindowOpen</code> is set to <code>true</code>.
+        /// </summary>
+        private void OnGUI()
+        {
+            // Set the apperance of the UI window
+            GUI.skin = Skins.ConsoleSkin;
+
+            //If the window open boolean is set to true, show the UI window
+            if (_isWindowOpen)
+            {
+                _windowRect = GUILayout.Window(
+                    GUIUtility.GetControlID(FocusType.Passive),
+                    _windowRect,
+                    FillWindow,
+                    "<color=#FFFF00>// GALAXY TWEAKER</color>",
+                    GUILayout.Height(400),
+                    GUILayout.Width(600)
+                );
+            }
+        }
+
+        /// <summary>
+        /// Defines the content of the UI window drawn in the <code>OnGui</code> method.
+        /// </summary>
+        /// <param name="windowID"></param>
+        private void FillWindow(int windowID)
+        {
+            GUILayout.Label("<size=25>GALAXY SETUP</size>");
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Selected Galaxy Definition: ");
+            galaxyDefinition = GUILayout.TextField(galaxyDefinition, 45);
+            GUILayout.EndHorizontal();
+
+            GUILayout.Space(5);
+
+            if (GUILayout.Button("Load Selected Galaxy Definition"))
+            {
+                if (File.Exists(galaxyDefFolderLoc + galaxyDefinition))
+                {
+                    loadedFilePath = galaxyDefFolderLoc + galaxyDefinition;
+                }
+            }
+
+            GUILayout.Space(5);
+
+            if (GUILayout.Button("Reload Galaxy Definitions"))
+            {
+                GetGalaxyDefinitions();
+            }
+
+            GUILayout.Space(15);
+
+            if (galaxyDefsList.Count == 1)
+            {
+                GUILayout.Label("<size=20>" + galaxyDefsList.Count + " Galaxy Definition Was Found!</size>");
+            }
+            else
+            {
+                GUILayout.Label("<size=20>" + galaxyDefsList.Count + " Galaxy Definitions Were Found!</size>");
+            }
+
+            GUILayout.BeginVertical();
+            scrollbarPos = GUILayout.BeginScrollView(scrollbarPos, false, true, GUILayout.Height(125));
+            foreach (string galaxyDef in galaxyDefsList)
+            {
+                if (GUILayout.Button(galaxyDef))
+                {
+                    galaxyDefinition = galaxyDef;
+                }
+            }
+            GUILayout.EndScrollView();
+            GUILayout.EndVertical();
+
+            GUILayout.Space(5);
+
+            GUILayout.Label("Press G To Close This Window...");
+
+            GUI.DragWindow(new Rect(0, 0, 10000, 500));
+        }
+
+        /// <summary>
+        /// Attempts to get all of the galaxy definition json files that are currently in the galaxy definitions folder
+        /// and put them into a list.
+        /// </summary>
+        private void GetGalaxyDefinitions()
+        {
+            if (galaxyDefsList.Count > 0) //If the current list of galaxy definitions is not empty, clear it
+            {
+                galaxyDefsList.Clear(); //This is done to refresh the list everytime this function is called
+            }
+
+            DirectoryInfo galaxyDefFolder = new DirectoryInfo(galaxyDefFolderLoc);
+
+            FileInfo[] galaxyDefInfo = galaxyDefFolder.GetFiles("*" + galaxyDefFileType + "*");
+
+            foreach (FileInfo galaxyDef in galaxyDefInfo)
+            {
+                if (!galaxyDefsList.Contains(galaxyDef.Name))
+                {
+                    galaxyDefsList.Add(galaxyDef.Name);
+                }
+            }
+        }
+
+        private bool _isWindowOpen;
+        private Rect _windowRect;
+
+        private string galaxyDefinition = "GalaxyDefinition_Default.json";
+        private string galaxyDefFileType = ".json";
+        private string loadedFilePath = "Path/galaxy_tweaker/GalaxyDefinitions/GalaxyDefinition_Selected.json";
+
+        private string galaxyDefFolderLoc = "C:/Program Files (x86)/Steam/steamapps/common/Kerbal Space Program 2/BepInEx/plugins/galaxy_tweaker/GalaxyDefinitions/";
+        public List<string> galaxyDefsList = new List<string>();
+        private Vector2 scrollbarPos;
     }
 }
