@@ -1,9 +1,9 @@
 # Galaxy Tweaker
-A galaxy configuerer that allows for modification and usage of custom GalaxyDefinition files, allowing users to tweak the galaxy.
+A galaxy configuerer that allows for modification and usage of custom galaxy definition files, allowing users to tweak the galaxy.
 
-**DO NOT OPEN YOUR OLD SAVE FILES WHILE THIS MOD IS INSTALLED! YOU MAY MESS UP YOUR SAVES! ONLY TRY THIS MOD WITH NEW SAVE FILES!**
+While this mod shouldn't affect old saves in any way, be careful with loading your old saves with it active.
 
-**THIS MOD IS ALSO IN A VERY EARLY STATE! EXPECT BUGS AND CRASHES!**
+**THIS MOD IS IN A VERY EARLY STATE! EXPECT BUGS AND CRASHES!**
 
 ## How to use
 1. Download the mod like any other SpaceWarp mod (drag the BepInEx folder into the root KSP2 directory).
@@ -13,8 +13,8 @@ A galaxy configuerer that allows for modification and usage of custom GalaxyDefi
 1. Go into the mod folder after launching the game once, and go into the GalaxyDefinitions folder.
 2. Copy the GalaxyDefinition_Default.json file in there, and rename it to whatever you want (the name becomes important later, so remember it).
 3. Open the .json file, and edit it however you want.
-4. In KSP2, press F1 to open the SpaceWarp Mod Configuration window, and click on GalaxyTweaker.
-5. Edit the text box to match the name of the GalaxyDefinition you created **without the .json**.
+4. In KSP2, click the "Create New Campaign" button. A window should automatically appear.
+5. On the list, click on the galaxy definition you created.
 6. Create a new campaign. Your new galaxy should be loaded in there.
 
-Note this mod remembers which save file is using which GalaxyDefinition, so the target GalaxyDefinition only works on new save files (or technically old save files that have never been opened with GalaxyTweaker installed too, but that's not recommended).
+Note this mod remembers which save file is using which galaxy definition, so the target galaxy definition only works on new save files. Old save files should automatically be assigned to the default galaxy definition stored in the game files (not the `GalaxyDefinition_Default.json` that is automatically generated)
