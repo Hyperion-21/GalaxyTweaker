@@ -66,6 +66,10 @@ namespace GalaxyTweaker
                 "This is the file that the game will load when creating a new campaign. Inside <KSP2 Install>/BepInEx/plugins/galaxy_tweaker/GalaxyDefinitions is where these files are stored. GalaxyDefinition_Default represents the vanilla KSP2 galaxy, and is automatically regenerated on game load. To load in a custom galaxy definition, copy the default, tweak the values as you wish, and go back here and type in the file name (WITHOUT THE .json), and when you create a new campaign it should automatically load in celestial bodies as you have put them in in the file. If your game is getting stuck at \"Loading Celestial Body Data\" then either the file or this input is wrong!"
             );
             _logger.LogInfo($"Found config value: {_selectedTarget.Value}");
+
+            windowOpen = true;
+            galaxyDefsList.Clear();
+            GetGalaxyDefinitions();
         }
 
         [HarmonyPatch(typeof(LoadCelestialBodyDataFilesFlowAction), nameof(LoadCelestialBodyDataFilesFlowAction.DoAction))]
@@ -106,8 +110,7 @@ namespace GalaxyTweaker
                 _logger.LogInfo($"Loaded default campaign definition.");
                 return;
             }
-
-
+            
             _logger.LogInfo("Did not return out of default exception. Performing normally.");
             if (!File.Exists(CampaignPath))
             {
@@ -156,7 +159,6 @@ namespace GalaxyTweaker
                 );
             }
         }
-
         /// <summary>
         /// Defines the content of the UI window drawn in the <code>OnGui</code> method.
         /// </summary>
@@ -164,14 +166,11 @@ namespace GalaxyTweaker
         private void FillWindow(int windowID)
         {
             GUILayout.Label("<size=25>GALAXY SETUP</size>");
-
             GUILayout.BeginHorizontal();
             GUILayout.Label("Selected Galaxy Definition: ");
             galaxyDefinition = GUILayout.TextField(galaxyDefinition, 45);
             GUILayout.EndHorizontal();
-
             GUILayout.Space(5);
-
             if (GUILayout.Button("Load Selected Galaxy Definition"))
             {
                 if (File.Exists(galaxyDefFolderLoc + galaxyDefinition))
@@ -197,7 +196,6 @@ namespace GalaxyTweaker
             {
                 GUILayout.Label("<size=20>" + galaxyDefsList.Count + " Galaxy Definitions Were Found!</size>");
             }
-
             GUILayout.BeginVertical();
             scrollbarPos = GUILayout.BeginScrollView(scrollbarPos, false, true, GUILayout.Height(125));
             foreach (string galaxyDef in galaxyDefsList)
