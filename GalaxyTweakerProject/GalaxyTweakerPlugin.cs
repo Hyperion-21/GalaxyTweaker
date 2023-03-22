@@ -1,5 +1,4 @@
 ﻿using BepInEx;
-using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
 using SpaceWarp;
@@ -7,10 +6,7 @@ using SpaceWarp.API.Mods;
 using UnityEngine;
 using KSP.Game.Load;
 using KSP.Game;
-using System.IO;
-using System;
 using SpaceWarp.API.UI;
-using System.Collections.Generic;
 
 namespace GalaxyTweaker
 {
@@ -60,15 +56,6 @@ namespace GalaxyTweaker
                 );
                 _logger.LogInfo($"Copying the original asset into: {DefaultPath}");
             }
-
-            // Fetch a configuration value or create a default one if it does not exist
-            /*_selectedTarget = Config.Bind(
-                "Galaxy Definition Selection",
-                "Selected Galaxy Definition",
-                "GalaxyDefinition_Default",
-                "This is the file that the game will load when creating a new campaign. Inside <KSP2 Install>/BepInEx/plugins/galaxy_tweaker/GalaxyDefinitions is where these files are stored. GalaxyDefinition_Default represents the vanilla KSP2 galaxy, and is automatically regenerated on game load. To load in a custom galaxy definition, copy the default, tweak the values as you wish, and go back here and type in the file name (WITHOUT THE .json), and when you create a new campaign it should automatically load in celestial bodies as you have put them in in the file. If your game is getting stuck at \"Loading Celestial Body Data\" then either the file or this input is wrong!"
-            );
-            _logger.LogInfo($"Found config value: {_selectedTarget.Value}");*/
 
             galaxyDefsList.Clear();
             GetGalaxyDefinitions();
@@ -126,16 +113,13 @@ namespace GalaxyTweaker
             onGalaxyDefinitionLoaded(new TextAsset(jsonFeed));
         }
 
-        //All code below this line has been contributed by JohnsterSpaceProgram. Note: This code is also a WIP.
+        //Some code below this line has been contributed by JohnsterSpaceProgram.
         /// <summary>
-        /// Placeholder code for toggling the visibility of the Galaxy Tweaker UI window before the functionality 
-        /// for it opening when starting a new campaign is added by pressing the G key.
+        /// Opens and closes window based on if the "Create New Campaign" menu is open.
         /// </summary>
         private void LateUpdate()
         {
             _selectedTarget = galaxyDefinition;
-
-            // Opens and closes window based on if the "Create New Campaign" menu is open.
             if (_campaignMenuInstance != null)
             {
                 _isWindowOpen = _campaignMenuInstance._createCampaignMenu.activeInHierarchy;
@@ -170,21 +154,11 @@ namespace GalaxyTweaker
         private void FillWindow(int windowID)
         {
             GUILayout.Space(20);
-            // GUILayout.Label("<size=25>GALAXY SETUP</size>");
             GUILayout.BeginHorizontal();
             GUILayout.Label("Selected Galaxy Definition: ");
             galaxyDefinition = GUILayout.TextField(galaxyDefinition, 45);
             GUILayout.EndHorizontal();
             GUILayout.Space(5);
-            /*
-            if (GUILayout.Button("Load Selected Galaxy Definition"))
-            {
-                if (File.Exists(DefaultDirectory + galaxyDefinition))
-                {
-                    loadedFilePath = DefaultDirectory + galaxyDefinition;
-                }
-            }
-            */
 
             GUILayout.Space(5);
 
@@ -215,11 +189,29 @@ namespace GalaxyTweaker
             GUILayout.EndScrollView();
             GUILayout.EndVertical();
 
-            /*
+            //Allows for the use of a different folder inside of galaxy_tweaker for loading Galaxy Definitions from
             GUILayout.Space(5);
+            useDefaultDirectory = GUILayout.Toggle(useDefaultDirectory, "Use Default Folder?");
 
-            GUILayout.Label("Press G To Close This Window...");
-            */
+            if (!useDefaultDirectory)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Selected Folder: ");
+                currentDirectory = GUILayout.TextField(currentDirectory, 25);
+                GUILayout.EndHorizontal();
+
+                if (GUILayout.Button("Use Specified Folder"))
+                {
+                    string newPath = "C:/Program Files (x86)/Steam/steamapps/common/Kerbal Space Program 2/BepInEx/plugins/galaxy_tweaker/" + currentDirectory;
+                    if (Directory.Exists(newPath))
+                    {
+                        newFolderDirectory = newPath;
+                    }
+                }
+
+                GUILayout.Space(5);
+                GUILayout.Label("Note: The specified folder MUST be located inside of the galaxy_tweaker folder.");
+            }
 
             GUI.DragWindow(new Rect(0, 0, 10000, 500));
         }
@@ -235,7 +227,16 @@ namespace GalaxyTweaker
                 galaxyDefsList.Clear(); //This is done to refresh the list everytime this function is called
             }
 
-            DirectoryInfo galaxyDefFolder = new DirectoryInfo(DefaultDirectory);
+            if (useDefaultDirectory)
+            {
+                loadedDirectory = DefaultDirectory;
+            }
+            else
+            {
+                loadedDirectory = newFolderDirectory;
+            }
+
+            DirectoryInfo galaxyDefFolder = new DirectoryInfo(loadedDirectory);
 
             FileInfo[] galaxyDefInfo = galaxyDefFolder.GetFiles("*" + galaxyDefFileType + "*");
 
@@ -263,6 +264,12 @@ namespace GalaxyTweaker
         private string galaxyDefinition = "GalaxyDefinition_Default.json";
         private string galaxyDefFileType = ".json";
         public List<string> galaxyDefsList = new List<string>();
+
+        private bool useDefaultDirectory = true;
+        private string currentDirectory = "GalaxyDefinitions";
+        private string newFolderDirectory = "unspecified";
+
+        private string loadedDirectory = "unspecified";
         private Vector2 scrollbarPos;
     }
 }
