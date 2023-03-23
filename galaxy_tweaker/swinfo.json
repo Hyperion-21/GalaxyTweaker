@@ -4,7 +4,7 @@
   "name": "Galaxy Tweaker",
   "description": "A galaxy configuerer that allows for modification and usage of custom GalaxyDefinition files, allowing users to tweak the galaxy.",
   "source": "https://github.com/Hyperion-21/GalaxyTweaker",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "version_check": "",
   "dependencies": [
     {
