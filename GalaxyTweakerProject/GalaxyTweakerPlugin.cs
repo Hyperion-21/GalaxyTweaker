@@ -219,7 +219,10 @@ namespace GalaxyTweaker
 
             if (GUILayout.Button("Open Folder Location"))
             {
-                Process.Start(newFolderDirectory);
+                if (Directory.Exists(newFolderDirectory)) //Only open the location of the new directory if it exists
+                {
+                    Process.Start(newFolderDirectory);
+                }
             }
 
             GUI.DragWindow(new Rect(0, 0, 10000, 500));
@@ -245,15 +248,18 @@ namespace GalaxyTweaker
                 loadedDirectory = newFolderDirectory;
             }
 
-            DirectoryInfo galaxyDefFolder = new DirectoryInfo(loadedDirectory);
-
-            FileInfo[] galaxyDefInfo = galaxyDefFolder.GetFiles("*" + galaxyDefFileType + "*");
-
-            foreach (FileInfo galaxyDef in galaxyDefInfo)
+            if (Directory.Exists(loadedDirectory)) //A check to only get files from the loaded directory (folder) if it exists
             {
-                if (!galaxyDefsList.Contains(galaxyDef.Name))
+                DirectoryInfo galaxyDefFolder = new DirectoryInfo(loadedDirectory);
+
+                FileInfo[] galaxyDefInfo = galaxyDefFolder.GetFiles("*" + galaxyDefFileType + "*");
+
+                foreach (FileInfo galaxyDef in galaxyDefInfo)
                 {
-                    galaxyDefsList.Add(galaxyDef.Name);
+                    if (!galaxyDefsList.Contains(galaxyDef.Name))
+                    {
+                        galaxyDefsList.Add(galaxyDef.Name);
+                    }
                 }
             }
         }
