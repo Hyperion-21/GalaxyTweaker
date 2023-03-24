@@ -39,7 +39,7 @@ namespace GalaxyTweaker
         private static CampaignMenu _campaignMenuInstance = null;
 
         private static bool _isWindowOpen;
-        private Rect _windowRect;
+        private Rect _windowRect = new Rect((Screen.width - 600) / 2, (Screen.height - 400) / 2, 600, 400);
 
         private string galaxyDefinition = "GalaxyDefinition_Default.json";
         private string galaxyDefFileType = ".json";
@@ -47,7 +47,7 @@ namespace GalaxyTweaker
 
         private bool useDefaultDirectory = true;
         private string currentDirectory = "GalaxyDefinitions";
-        private string newFolderDirectory = "unspecified";
+        private string newFolderDirectory;
 
         private string loadedDirectory = "unspecified";
         private Vector2 scrollbarPos;
@@ -58,6 +58,7 @@ namespace GalaxyTweaker
         {
             base.OnPreInitialized();
             Path = PluginFolderPath;
+            newFolderDirectory = DefaultDirectory;
             Instance = this;
             _logger = Logger;
         }
@@ -133,12 +134,6 @@ namespace GalaxyTweaker
             onGalaxyDefinitionLoaded(new TextAsset(jsonFeed));
         }
 
-        private void Awake()
-        {
-            _windowRect = new Rect((Screen.width - 600) / 2, (Screen.height - 400) / 2, 600, 400);
-            newPath = "C:/Program Files (x86)/Steam/steamapps/common/Kerbal Space Program 2/BepInEx/plugins/galaxy_tweaker/" + currentDirectory;
-        }
-
         //Some code below this line has been contributed by JohnsterSpaceProgram.
         /// <summary>
         /// Opens and closes window based on if the "Create New Campaign" menu is open.
@@ -190,8 +185,10 @@ namespace GalaxyTweaker
 
             GUILayout.Space(5);
 
+            _logger.LogInfo("newFolderDirectory: " + newFolderDirectory);
             if (GUILayout.Button("Reload Galaxy Definitions"))
             {
+                newPath = $"{Path}/" + currentDirectory;
                 if (Directory.Exists(newPath))
                 {
                     newFolderDirectory = newPath;
