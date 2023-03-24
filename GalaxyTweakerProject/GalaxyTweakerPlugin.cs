@@ -38,6 +38,22 @@ namespace GalaxyTweaker
 
         private static CampaignMenu _campaignMenuInstance = null;
 
+        private static bool _isWindowOpen;
+        private Rect _windowRect;
+
+        private string galaxyDefinition = "GalaxyDefinition_Default.json";
+        private string galaxyDefFileType = ".json";
+        public List<string> galaxyDefsList = new List<string>();
+
+        private bool useDefaultDirectory = true;
+        private string currentDirectory = "GalaxyDefinitions";
+        private string newFolderDirectory = "unspecified";
+
+        private string loadedDirectory = "unspecified";
+        private Vector2 scrollbarPos;
+
+        string newPath;
+
         public override void OnPreInitialized()
         {
             base.OnPreInitialized();
@@ -120,6 +136,7 @@ namespace GalaxyTweaker
         private void Awake()
         {
             _windowRect = new Rect((Screen.width - 600) / 2, (Screen.height - 400) / 2, 600, 400);
+            newPath = "C:/Program Files (x86)/Steam/steamapps/common/Kerbal Space Program 2/BepInEx/plugins/galaxy_tweaker/" + currentDirectory;
         }
 
         //Some code below this line has been contributed by JohnsterSpaceProgram.
@@ -175,7 +192,6 @@ namespace GalaxyTweaker
 
             if (GUILayout.Button("Reload Galaxy Definitions"))
             {
-                string newPath = "C:/Program Files (x86)/Steam/steamapps/common/Kerbal Space Program 2/BepInEx/plugins/galaxy_tweaker/" + currentDirectory;
                 if (Directory.Exists(newPath))
                 {
                     newFolderDirectory = newPath;
@@ -274,19 +290,5 @@ namespace GalaxyTweaker
             _campaignMenuInstance = __instance;
             return true;
         }
-
-        private static bool _isWindowOpen;
-        private Rect _windowRect;
-
-        private string galaxyDefinition = "GalaxyDefinition_Default.json";
-        private string galaxyDefFileType = ".json";
-        public List<string> galaxyDefsList = new List<string>();
-
-        private bool useDefaultDirectory = true;
-        private string currentDirectory = "GalaxyDefinitions";
-        private string newFolderDirectory = "unspecified";
-
-        private string loadedDirectory = "unspecified";
-        private Vector2 scrollbarPos;
     }
 }
