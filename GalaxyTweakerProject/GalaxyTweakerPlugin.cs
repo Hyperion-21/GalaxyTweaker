@@ -117,6 +117,11 @@ namespace GalaxyTweaker
             onGalaxyDefinitionLoaded(new TextAsset(jsonFeed));
         }
 
+        private void Awake()
+        {
+            _windowRect = new Rect((Screen.width - 600) / 2, (Screen.height - 400) / 2, 600, 400);
+        }
+
         //Some code below this line has been contributed by JohnsterSpaceProgram.
         /// <summary>
         /// Opens and closes window based on if the "Create New Campaign" menu is open.
