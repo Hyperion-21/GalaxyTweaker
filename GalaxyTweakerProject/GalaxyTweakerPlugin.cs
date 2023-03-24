@@ -217,12 +217,9 @@ namespace GalaxyTweaker
 
             GUILayout.Space(5);
 
-            if (GUILayout.Button("Open Folder Location"))
+            if (GUILayout.Button("Open Folder Location") && Directory.Exists(newFolderDirectory))
             {
-                if (Directory.Exists(newFolderDirectory)) //Only open the location of the new directory if it exists
-                {
-                    Process.Start(newFolderDirectory);
-                }
+                Process.Start(newFolderDirectory);
             }
 
             GUI.DragWindow(new Rect(0, 0, 10000, 500));
