@@ -38,10 +38,27 @@ namespace GalaxyTweaker
 
         private static CampaignMenu _campaignMenuInstance = null;
 
+        private static bool _isWindowOpen;
+        private Rect _windowRect = new Rect((Screen.width - 600) / 2, (Screen.height - 400) / 2, 600, 400);
+
+        private string galaxyDefinition = "GalaxyDefinition_Default.json";
+        private string galaxyDefFileType = ".json";
+        public List<string> galaxyDefsList = new List<string>();
+
+        private bool useDefaultDirectory = true;
+        private string currentDirectory = "GalaxyDefinitions";
+        private string newFolderDirectory;
+
+        private string loadedDirectory = "unspecified";
+        private Vector2 scrollbarPos;
+
+        string newPath;
+
         public override void OnPreInitialized()
         {
             base.OnPreInitialized();
             Path = PluginFolderPath;
+            newFolderDirectory = DefaultDirectory;
             Instance = this;
             _logger = Logger;
         }
@@ -168,9 +185,10 @@ namespace GalaxyTweaker
 
             GUILayout.Space(5);
 
+            _logger.LogInfo("newFolderDirectory: " + newFolderDirectory);
             if (GUILayout.Button("Reload Galaxy Definitions"))
             {
-                string newPath = "C:/Program Files (x86)/Steam/steamapps/common/Kerbal Space Program 2/BepInEx/plugins/galaxy_tweaker/" + currentDirectory;
+                newPath = $"{Path}/" + currentDirectory;
                 if (Directory.Exists(newPath))
                 {
                     newFolderDirectory = newPath;
@@ -217,7 +235,7 @@ namespace GalaxyTweaker
 
             GUILayout.Space(5);
 
-            if (GUILayout.Button("Open Folder Location"))
+            if (GUILayout.Button("Open Folder Location") && Directory.Exists(newFolderDirectory))
             {
                 Process.Start(newFolderDirectory);
             }
@@ -245,15 +263,18 @@ namespace GalaxyTweaker
                 loadedDirectory = newFolderDirectory;
             }
 
-            DirectoryInfo galaxyDefFolder = new DirectoryInfo(loadedDirectory);
-
-            FileInfo[] galaxyDefInfo = galaxyDefFolder.GetFiles("*" + galaxyDefFileType + "*");
-
-            foreach (FileInfo galaxyDef in galaxyDefInfo)
+            if (Directory.Exists(loadedDirectory)) //A check to only get files from the loaded directory (folder) if it exists
             {
-                if (!galaxyDefsList.Contains(galaxyDef.Name))
+                DirectoryInfo galaxyDefFolder = new DirectoryInfo(loadedDirectory);
+
+                FileInfo[] galaxyDefInfo = galaxyDefFolder.GetFiles("*" + galaxyDefFileType + "*");
+
+                foreach (FileInfo galaxyDef in galaxyDefInfo)
                 {
-                    galaxyDefsList.Add(galaxyDef.Name);
+                    if (!galaxyDefsList.Contains(galaxyDef.Name))
+                    {
+                        galaxyDefsList.Add(galaxyDef.Name);
+                    }
                 }
             }
         }
@@ -266,19 +287,5 @@ namespace GalaxyTweaker
             _campaignMenuInstance = __instance;
             return true;
         }
-
-        private static bool _isWindowOpen;
-        private Rect _windowRect;
-
-        private string galaxyDefinition = "GalaxyDefinition_Default.json";
-        private string galaxyDefFileType = ".json";
-        public List<string> galaxyDefsList = new List<string>();
-
-        private bool useDefaultDirectory = true;
-        private string currentDirectory = "GalaxyDefinitions";
-        private string newFolderDirectory = "unspecified";
-
-        private string loadedDirectory = "unspecified";
-        private Vector2 scrollbarPos;
     }
 }
