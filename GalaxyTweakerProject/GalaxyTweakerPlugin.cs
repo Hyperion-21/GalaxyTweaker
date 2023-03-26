@@ -11,6 +11,12 @@ using System.Collections.Generic;
 using System;
 using System.IO;
 using System.Diagnostics;
+using KSP.Game.Flow;
+using Newtonsoft.Json;
+using KSP.Assets;
+using KSP.IO;
+using KSP.Sim;
+using KSP.Sim.Definitions;
 
 namespace GalaxyTweaker
 {
@@ -32,6 +38,7 @@ namespace GalaxyTweaker
         private static string ConfigPath => $"{Path}/GalaxyDefinitions/{_selectedTarget}";
         private static string CampaignDirectory => $"{Path}/saves/{Game.SessionManager.ActiveCampaignName}";
         private static string CampaignPath => $"{CampaignDirectory}/CampaignGalaxyDefinition.json";
+        private static string FlagIgnorePath => $"{Path}/flagreplace.json";
 
         public static GalaxyTweakerPlugin Instance { get; set; }
         private static ManualLogSource _logger;
@@ -53,6 +60,9 @@ namespace GalaxyTweaker
         private Vector2 scrollbarPos;
 
         string newPath;
+
+        static string startingPlanet = "Karbin";
+        static readonly string[] stockCelestialBodies = { "Kerbol", "Moho", "Eve", "Gilly", "Kerbin", "Mun", "Minmus", "Duna", "Ike", "Dres", "Jool", "Laythe", "Vall", "Tylo", "Bop", "Pol", "Eeloo" };
 
         public override void OnPreInitialized()
         {
@@ -185,7 +195,6 @@ namespace GalaxyTweaker
 
             GUILayout.Space(5);
 
-            _logger.LogInfo("newFolderDirectory: " + newFolderDirectory);
             if (GUILayout.Button("Reload Galaxy Definitions"))
             {
                 newPath = $"{Path}/" + currentDirectory;
@@ -282,10 +291,116 @@ namespace GalaxyTweaker
         // This "catches" the CampaignMenu instance (because I couldn't figure out how else to do it, will probably be replaced later)
         [HarmonyPatch(typeof(CampaignMenu), nameof(CampaignMenu.StartNewCampaignMenu))]
         [HarmonyPrefix]
-        public static bool AutoOpenWindow(CampaignMenu __instance)
+        public static bool CatchCampaignMenuInstance(CampaignMenu __instance)
         {
             _campaignMenuInstance = __instance;
             return true;
         }
+
+        //private void PlanetReplacer()
+        //{
+        //    if (!File.Exists(FlagIgnorePath))
+        //    {
+        //        _logger.LogInfo("Did not find flagingnore.json, skipping file readout.");
+        //        return;
+        //    }
+        //    _logger.LogInfo("Reading out flagignore.json");
+        //    JsonTextReader reader = new(new StringReader(File.ReadAllText(FlagIgnorePath)));
+        //    // _logger.LogInfo(File.ReadAllText(FlagIgnorePath));
+        //    while (reader.Read())
+        //    {
+        //        if (reader.Value == null) continue;
+        //        string key = reader.Value.ToString();
+        //        reader.Read();
+        //        string value = reader.Value.ToString();
+
+        //        _logger.LogInfo(key + ": " + value);
+        //    }
+        //}
+
+        [HarmonyPatch(typeof(LoadCelestialBodyDataFilesFlowAction), nameof(LoadCelestialBodyDataFilesFlowAction.OnGalaxyDefinitionLoaded))]
+        [HarmonyPrefix]
+        public static bool OverrideLoadCelestialBodyDataFilesFlowAction(TextAsset asset, LoadCelestialBodyDataFilesFlowAction __instance)
+        {
+            __instance._galaxy = IOProvider.FromJson<SerializedGalaxyDefinition>(asset.text);
+            __instance._game.Assets.LoadByLabel<TextAsset>("celestial_bodies", null, delegate (IList<TextAsset> allBodiesTextAssets)
+            {
+                __instance._data.CelestialBodyProperties = new CelestialBodyProperties[__instance._galaxy.CelestialBodies.Count];
+                __instance._game.CelestialBodies.Initialize();
+                int num = 0;
+                for (int i = 0; i < allBodiesTextAssets.Count; i++)
+                {
+                    allBodiesTextAssets[i] = PlanetReplacer(allBodiesTextAssets[i]);
+                    _logger.LogDebug(allBodiesTextAssets[i].text);
+                    CelestialBodyCore celestialBodyCore = IOProvider.FromBuffer<CelestialBodyCore>(allBodiesTextAssets[i].bytes);
+                    if (__instance.GalaxyHasBody(celestialBodyCore.data.bodyName))
+                    {
+                        __instance._game.CelestialBodies.RegisterBodyFromData(celestialBodyCore);
+                        __instance._data.CelestialBodyProperties[num] = celestialBodyCore.data.ToOldBodyProperties();
+                        num++;
+                    }
+                }
+                GameManager.Instance.Game.Assets.ReleaseAsset<IList<TextAsset>>(allBodiesTextAssets);
+                __instance._resolve();
+            });
+            return false;
+        }
+
+        public static TextAsset PlanetReplacer(TextAsset celes)
+        {
+            JsonTextReader reader = new(new StringReader(celes.text));
+            while (reader.Read())
+            {
+                if (reader.Value == null) continue;
+                string key = reader.Value.ToString();
+                if (key != "bodyName") continue;
+                reader.Read();
+                string value = reader.Value.ToString();
+                if (File.Exists($"{Path}/CelestialBodyData/{value}.json"))
+                {
+                    _logger.LogInfo($"Found replacement file for {value}, replacing.");
+                    celes = new TextAsset(File.ReadAllText($"{Path}/CelestialBodyData/{value}.json"));
+                }
+                else
+                {
+                    _logger.LogInfo($"Did not find replacement file for {value}, using stock values.");
+                }
+                break;
+            }
+            // reader.CloseInput = false;
+            reader.Close();
+            return celes;
+        }
+
+        //[HarmonyPatch(typeof(AssetProvider), nameof(AssetProvider.LoadByLabel))]
+        //[HarmonyPrefix]
+        //public static bool LoadByLabelReplacer<T>(string label, Action<T> assetLoadCallback, Action<IList<T>> resultCallback = null) where T : UnityEngine.Object
+        //{
+        //    if (label != "celestial_bodies") return true;
+        //    if (!File.Exists(FlagIgnorePath))
+        //    {
+        //        _logger.LogInfo("Did not find flagingnore.json, assuming no stock planets are being replaced.");
+        //        return true;
+        //    }
+        //    JsonTextReader reader = new(new StringReader(File.ReadAllText(FlagIgnorePath)));
+        //    while (reader.Read())
+        //    {
+        //        if (reader.Value == null) continue;
+        //        string key = reader.Value.ToString();
+        //        reader.Read();
+        //        string value = reader.Value.ToString();
+        //    }
+
+
+        //        return false;
+        //}
+
+        //[HarmonyPatch(typeof(LoadStartingCelestialBodyFlowAction), nameof(LoadStartingCelestialBodyFlowAction.GetStartingSoiCelestialBodyName))]
+        //[HarmonyPostfix]
+        //public static void ChangeDefaultStartingPlanet1(ref string __result)
+        //{
+        //    _logger.LogInfo("LoadStartingCelestialBodyFlowAction Postfix was run. Would have ran " + __result + " otherwise.");
+        //    __result = startingPlanet;
+        //}
     }
 }
