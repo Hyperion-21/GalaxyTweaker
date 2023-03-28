@@ -17,6 +17,8 @@ using KSP.Assets;
 using KSP.IO;
 using KSP.Sim;
 using KSP.Sim.Definitions;
+using KSP.Sim.impl;
+using KSP;
 
 namespace GalaxyTweaker
 {
@@ -63,6 +65,8 @@ namespace GalaxyTweaker
 
         static string startingPlanet = "Karbin";
         static readonly string[] stockCelestialBodies = { "Kerbol", "Moho", "Eve", "Gilly", "Kerbin", "Mun", "Minmus", "Duna", "Ike", "Dres", "Jool", "Laythe", "Vall", "Tylo", "Bop", "Pol", "Eeloo" };
+
+        static CoreCelestialBodyData ccbd;
 
         public override void OnPreInitialized()
         {
@@ -402,5 +406,55 @@ namespace GalaxyTweaker
         //    _logger.LogInfo("LoadStartingCelestialBodyFlowAction Postfix was run. Would have ran " + __result + " otherwise.");
         //    __result = startingPlanet;
         //}
+
+        [HarmonyPatch(typeof(CelestialBodyBehavior), nameof(CelestialBodyBehavior.OnScaledSpaceViewInstantiated))]
+        [HarmonyPrefix]
+        public static bool PQSOverride(GameObject instance, CelestialBodyBehavior __instance)
+        {
+            if (instance == null || __instance == null) return true;
+
+            instance.TryGetComponent<CoreCelestialBodyData>(out __instance._coreCelestialBodyData);
+            //_logger.LogInfo("Here's some celestial body data, let's hope it works:");
+            //_logger.LogInfo(__instance._coreCelestialBodyData.Data.radius.ToString());
+
+            //if (__instance._coreCelestialBodyData.Data.bodyName == "Kerbin")
+            //{
+            //    _logger.LogInfo("Hey, we found Kerbin! Let's change it :)");
+            //    _logger.LogInfo("Currently, radius is " + __instance._coreCelestialBodyData.Data.radius.ToString());
+            //    __instance._coreCelestialBodyData.Data.radius = 6000000;
+            //    _logger.LogInfo("Now, it is " + __instance._coreCelestialBodyData.Data.radius.ToString());
+            //}
+            __instance._coreCelestialBodyData = PlanetReplacer2(__instance._coreCelestialBodyData);
+
+            return true;
+        }
+
+        public static CoreCelestialBodyData PlanetReplacer2(CoreCelestialBodyData data)
+        {
+            if (!File.Exists($"{Path}/CelestialBodyData/{data.Data.bodyName}.json")) return data;
+            _logger.LogInfo($"Running PlanetReplacer2 on {data.Data.bodyName}");
+            JsonTextReader reader = new(new StringReader(File.ReadAllText($"{Path}/CelestialBodyData/{data.Data.bodyName}.json")));
+            while (reader.Read())
+            {
+                if (reader.Value == null) continue;
+                string key = reader.Value.ToString();
+                if (key != "bodyName") continue;
+                reader.Read();
+                string value = reader.Value.ToString();
+                if (value != data.Data.bodyName) return data;
+                break;
+            }
+            while (reader.Read())
+            {
+                string key = reader.Value.ToString();
+                if (key != "radius") continue;
+                reader.Read();
+                _logger.LogInfo($"Found planet radius of {reader.Value.ToString()} in replacement file, setting radius to that.");
+                data.Data.radius = (double)reader.Value;
+                _logger.LogInfo($"Planet radius is now {data.Data.radius.ToString()}. Hopefully, this is the same as the previous number.");
+                break;
+            }
+            return data;
+        }
     }
 }
