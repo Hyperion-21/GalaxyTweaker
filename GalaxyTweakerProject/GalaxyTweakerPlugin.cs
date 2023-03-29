@@ -53,6 +53,7 @@ namespace GalaxyTweaker
         private string galaxyDefinition = "GalaxyDefinition_Default.json";
         private const string galaxyDefFileType = ".json";
         public List<string> galaxyDefsList = new();
+        public List<string> celestialDataList = new();
 
         private bool useDefaultDirectory = true;
         private static bool useDefaultGalaxyDefinition = false;
@@ -66,9 +67,9 @@ namespace GalaxyTweaker
         string newPath;
 
         // static string startingPlanet = "Karbin";
-        // static readonly string[] stockCelestialBodies = { "Kerbol", "Moho", "Eve", "Gilly", "Kerbin", "Mun", "Minmus", "Duna", "Ike", "Dres", "Jool", "Laythe", "Vall", "Tylo", "Bop", "Pol", "Eeloo" };
+        static readonly string[] stockCelestialBodies = { "Kerbol", "Moho", "Eve", "Gilly", "Kerbin", "Mun", "Minmus", "Duna", "Ike", "Dres", "Jool", "Laythe", "Vall", "Tylo", "Bop", "Pol", "Eeloo" };
 
-        private static string _activePlanetPack;
+        private static string _activePlanetPack = "Default Pack";
 
         public override void OnPreInitialized()
         {
@@ -85,17 +86,24 @@ namespace GalaxyTweaker
             Harmony.CreateAndPatchAll(typeof(GalaxyTweakerPlugin));
 
             // Generate GalaxyDefinition_Default.json from address
-            if (!File.Exists(DefaultPath))
+            Directory.CreateDirectory($"{Path}/GalaxyDefinitions");
+            GameManager.Instance.Game.Assets.Load<TextAsset>("GalaxyDefinition_Default", asset =>
+                File.WriteAllText(DefaultPath, asset.text)
+            );
+            _logger.LogInfo($"Copying the original asset into: {DefaultPath}");
+
+            Directory.CreateDirectory($"{Path}/CelestialBodyData/Default Pack");
+            foreach (String celestialBody in stockCelestialBodies)
             {
-                Directory.CreateDirectory($"{Path}/GalaxyDefinitions");
-                GameManager.Instance.Game.Assets.Load<TextAsset>("GalaxyDefinition_Default", asset =>
-                    File.WriteAllText(DefaultPath, asset.text)
+                GameManager.Instance.Game.Assets.Load<TextAsset>($"{celestialBody}.json", asset =>
+                    File.WriteAllText($"{Path}/CelestialBodyData/Default Pack/{celestialBody}.json", asset.text)
                 );
-                _logger.LogInfo($"Copying the original asset into: {DefaultPath}");
             }
 
             galaxyDefsList.Clear();
+            celestialDataList.Clear();
             GetGalaxyDefinitions();
+            GetCelestialData();
         }
 
         [HarmonyPatch(typeof(LoadCelestialBodyDataFilesFlowAction), nameof(LoadCelestialBodyDataFilesFlowAction.DoAction))]
@@ -204,9 +212,7 @@ namespace GalaxyTweaker
                 GUILayout.Label("Selected Galaxy Definition: ");
                 galaxyDefinition = GUILayout.TextField(galaxyDefinition, 45);
                 GUILayout.EndHorizontal();
-                GUILayout.Space(5);
-
-                GUILayout.Space(5);
+                GUILayout.Space(10);
 
                 if (GUILayout.Button("Reload Galaxy Definitions"))
                 {
@@ -230,7 +236,7 @@ namespace GalaxyTweaker
                     GUILayout.Label("<size=20>Found " + galaxyDefsList.Count + " Galaxy Definitions!</size>");
                 }
                 GUILayout.BeginVertical();
-                scrollbarPos = GUILayout.BeginScrollView(scrollbarPos, false, true, GUILayout.Height(213));
+                scrollbarPos = GUILayout.BeginScrollView(scrollbarPos, false, true, GUILayout.Height(215));
                 foreach (string galaxyDef in galaxyDefsList)
                 {
                     if (GUILayout.Button(galaxyDef))
@@ -261,6 +267,7 @@ namespace GalaxyTweaker
                 {
                     Process.Start(newFolderDirectory);
                 }
+                GUILayout.Space(15);
             }
             else
             {
@@ -268,10 +275,70 @@ namespace GalaxyTweaker
             }
 
             GUILayout.Space(5);
-            useDefaultCelestialData = GUILayout.Toggle(useDefaultCelestialData, "Use Default Celestial Data?");
+            useDefaultCelestialData = GUILayout.Toggle(useDefaultCelestialData, "Use Default Celestial Body Data?");
             if (!useDefaultCelestialData)
             {
-                GUILayout.Label("wawa");
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Selected Celestial Body Data Pack: ");
+                _activePlanetPack = GUILayout.TextField(_activePlanetPack, 45);
+                GUILayout.EndHorizontal();
+                GUILayout.Space(10);
+
+                if (GUILayout.Button("Reload Celestial Body Data"))
+                {
+                    newPath = $"{Path}/CelestialBodyData/" + _activePlanetPack;
+                    if (Directory.Exists(newPath))
+                    {
+                        newFolderDirectory = newPath;
+                    }
+
+                    GetCelestialData();
+                }
+
+                GUILayout.Space(15);
+
+                if (celestialDataList.Count == 1)
+                {
+                    GUILayout.Label("<size=20>Found " + celestialDataList.Count + " Celestial Body Data Pack!</size>");
+                }
+                else
+                {
+                    GUILayout.Label("<size=20>Found " + celestialDataList.Count + " Celestial Body Data Packs!</size>");
+                }
+                GUILayout.BeginVertical();
+                scrollbarPos = GUILayout.BeginScrollView(scrollbarPos, false, true, GUILayout.Height(215));
+                foreach (string celestialData in celestialDataList)
+                {
+                    if (GUILayout.Button(celestialData))
+                    {
+                        _activePlanetPack = celestialData;
+                    }
+                }
+                GUILayout.EndScrollView();
+                GUILayout.EndVertical();
+
+                /*
+                GUILayout.Space(5);
+                useDefaultDirectory = GUILayout.Toggle(useDefaultDirectory, "Use Default Folder?");
+
+                if (!useDefaultDirectory)
+                {
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Label("Selected Folder: ");
+                    currentDirectory = GUILayout.TextField(currentDirectory, 25);
+                    GUILayout.EndHorizontal();
+                    GUILayout.Space(5);
+                    GUILayout.Label("Note: The specified folder MUST be located inside of the galaxy_tweaker folder.");
+                }
+                */
+
+                GUILayout.Space(5);
+
+                if (GUILayout.Button("Open Folder Location") && Directory.Exists($"{Path}/CelestialBodyData"))
+                {
+                    Process.Start($"{Path}/CelestialBodyData");
+                }
+                // GUILayout.Space(15);
             }
 
             GUI.DragWindow(new Rect(0, 0, 10000, 500));
@@ -308,6 +375,38 @@ namespace GalaxyTweaker
                     if (!galaxyDefsList.Contains(galaxyDef.Name))
                     {
                         galaxyDefsList.Add(galaxyDef.Name);
+                    }
+                }
+            }
+        }
+
+        private void GetCelestialData()
+        {
+            if (celestialDataList.Count > 0) //If the current list of galaxy definitions is not empty, clear it
+            {
+                celestialDataList.Clear(); //This is done to refresh the list everytime this function is called
+            }
+
+            /*if (useDefaultDirectory)
+            {
+                loadedDirectory = DefaultDirectory;
+            }
+            else
+            {
+                loadedDirectory = newFolderDirectory;
+            }*/
+
+            if (Directory.Exists($"{Path}/CelestialBodyData")) //A check to only get files from the loaded directory (folder) if it exists
+            {
+                DirectoryInfo celestialDataFolder = new($"{Path}/CelestialBodyData");
+
+                DirectoryInfo[] celestialDataInfo = celestialDataFolder.GetDirectories("*");
+
+                foreach (DirectoryInfo celestialData in celestialDataInfo)
+                {
+                    if (!celestialDataList.Contains(celestialData.Name))
+                    {
+                        celestialDataList.Add(celestialData.Name);
                     }
                 }
             }
@@ -382,10 +481,10 @@ namespace GalaxyTweaker
                 if (key != "bodyName") continue;
                 reader.Read();
                 string value = reader.Value.ToString();
-                if (File.Exists($"{Path}/CelestialBodyData/{value}.json"))
+                if (File.Exists($"{Path}/CelestialBodyData/{_activePlanetPack}/{value}.json"))
                 {
                     _logger.LogInfo($"Found replacement file for {value}, replacing.");
-                    celes = new TextAsset(File.ReadAllText($"{Path}/CelestialBodyData/{value}.json"));
+                    celes = new TextAsset(File.ReadAllText($"{Path}/CelestialBodyData/{_activePlanetPack}/{value}.json"));
                 }
                 else
                 {
@@ -453,9 +552,9 @@ namespace GalaxyTweaker
 
         public static CoreCelestialBodyData PlanetReplacer2(CoreCelestialBodyData data)
         {
-            if (!File.Exists($"{Path}/CelestialBodyData/{data.Data.bodyName}.json")) return data;
+            if (!File.Exists($"{Path}/CelestialBodyData/{_activePlanetPack}/{data.Data.bodyName}.json")) return data;
             _logger.LogInfo($"Running PlanetReplacer2 on {data.Data.bodyName}");
-            JsonTextReader reader = new(new StringReader(File.ReadAllText($"{Path}/CelestialBodyData/{data.Data.bodyName}.json")));
+            JsonTextReader reader = new(new StringReader(File.ReadAllText($"{Path}/CelestialBodyData/{_activePlanetPack}/{data.Data.bodyName}.json")));
             while (reader.Read())
             {
                 if (reader.Value == null) continue;
