@@ -48,13 +48,15 @@ namespace GalaxyTweaker
         private static CampaignMenu _campaignMenuInstance = null;
 
         private static bool _isWindowOpen;
-        private Rect _windowRect = new Rect((Screen.width - 600) / 2, (Screen.height - 400) / 2, 600, 400);
+        private Rect _windowRect = new((Screen.width - 600) / 2, (Screen.height - 400) / 2, 600, 400);
 
         private string galaxyDefinition = "GalaxyDefinition_Default.json";
-        private string galaxyDefFileType = ".json";
-        public List<string> galaxyDefsList = new List<string>();
+        private const string galaxyDefFileType = ".json";
+        public List<string> galaxyDefsList = new();
 
         private bool useDefaultDirectory = true;
+        private static bool useDefaultGalaxyDefinition = false;
+        private static bool useDefaultCelestialData = false;
         private string currentDirectory = "GalaxyDefinitions";
         private string newFolderDirectory;
 
@@ -63,10 +65,10 @@ namespace GalaxyTweaker
 
         string newPath;
 
-        static string startingPlanet = "Karbin";
-        static readonly string[] stockCelestialBodies = { "Kerbol", "Moho", "Eve", "Gilly", "Kerbin", "Mun", "Minmus", "Duna", "Ike", "Dres", "Jool", "Laythe", "Vall", "Tylo", "Bop", "Pol", "Eeloo" };
+        // static string startingPlanet = "Karbin";
+        // static readonly string[] stockCelestialBodies = { "Kerbol", "Moho", "Eve", "Gilly", "Kerbin", "Mun", "Minmus", "Duna", "Ike", "Dres", "Jool", "Laythe", "Vall", "Tylo", "Bop", "Pol", "Eeloo" };
 
-        static CoreCelestialBodyData ccbd;
+        private static string _activePlanetPack;
 
         public override void OnPreInitialized()
         {
@@ -122,8 +124,12 @@ namespace GalaxyTweaker
 
         private static void LoadDefinitions(Action<TextAsset> onGalaxyDefinitionLoaded)
         {
-            _logger.LogInfo("File Exists: " + File.Exists(CampaignPath).ToString());
-            _logger.LogInfo("Campaign Exists: " + Game.SaveLoadManager.CampaignExists(Game.SessionManager.ActiveCampaignType, Game.SessionManager.ActiveCampaignName).ToString());
+            //GameManager.Instance.Game.Assets.Load<TextAsset>("GalaxyDefinition_Default", asset =>
+            //    File.WriteAllText(DefaultPath, asset.text)
+            //);
+            //_logger.LogInfo($"Copying the original asset into: {DefaultPath}");
+            // _logger.LogInfo("File Exists: " + File.Exists(CampaignPath).ToString());
+            // _logger.LogInfo("Campaign Exists: " + Game.SaveLoadManager.CampaignExists(Game.SessionManager.ActiveCampaignType, Game.SessionManager.ActiveCampaignName).ToString());
 
             if (Game.SaveLoadManager.CampaignExists(Game.SessionManager.ActiveCampaignType, Game.SessionManager.ActiveCampaignName) && !File.Exists(CampaignPath))
             {
@@ -179,7 +185,7 @@ namespace GalaxyTweaker
                     _windowRect,
                     FillWindow,
                     "<size=40><color=#696DFF>// GALAXY TWEAKER</color></size>",
-                    GUILayout.Height(400),
+                    GUILayout.Height(100),
                     GUILayout.Width(600)
                 );
             }
@@ -191,66 +197,81 @@ namespace GalaxyTweaker
         private void FillWindow(int windowID)
         {
             GUILayout.Space(20);
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("Selected Galaxy Definition: ");
-            galaxyDefinition = GUILayout.TextField(galaxyDefinition, 45);
-            GUILayout.EndHorizontal();
-            GUILayout.Space(5);
-
-            GUILayout.Space(5);
-
-            if (GUILayout.Button("Reload Galaxy Definitions"))
+            useDefaultGalaxyDefinition = GUILayout.Toggle(useDefaultGalaxyDefinition, "Use Default Galaxy Definition?");
+            if (!useDefaultGalaxyDefinition)
             {
-                newPath = $"{Path}/" + currentDirectory;
-                if (Directory.Exists(newPath))
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Selected Galaxy Definition: ");
+                galaxyDefinition = GUILayout.TextField(galaxyDefinition, 45);
+                GUILayout.EndHorizontal();
+                GUILayout.Space(5);
+
+                GUILayout.Space(5);
+
+                if (GUILayout.Button("Reload Galaxy Definitions"))
                 {
-                    newFolderDirectory = newPath;
+                    newPath = $"{Path}/" + currentDirectory;
+                    if (Directory.Exists(newPath))
+                    {
+                        newFolderDirectory = newPath;
+                    }
+
+                    GetGalaxyDefinitions();
                 }
 
-                GetGalaxyDefinitions();
-            }
+                GUILayout.Space(15);
 
-            GUILayout.Space(15);
+                if (galaxyDefsList.Count == 1)
+                {
+                    GUILayout.Label("<size=20>Found " + galaxyDefsList.Count + " Galaxy Definition!</size>");
+                }
+                else
+                {
+                    GUILayout.Label("<size=20>Found " + galaxyDefsList.Count + " Galaxy Definitions!</size>");
+                }
+                GUILayout.BeginVertical();
+                scrollbarPos = GUILayout.BeginScrollView(scrollbarPos, false, true, GUILayout.Height(213));
+                foreach (string galaxyDef in galaxyDefsList)
+                {
+                    if (GUILayout.Button(galaxyDef))
+                    {
+                        galaxyDefinition = galaxyDef;
+                    }
+                }
+                GUILayout.EndScrollView();
+                GUILayout.EndVertical();
 
-            if (galaxyDefsList.Count == 1)
-            {
-                GUILayout.Label("<size=20>Found " + galaxyDefsList.Count + " Galaxy Definition!</size>");
+                //Allows for the use of a different folder inside of galaxy_tweaker for loading Galaxy Definitions from
+                GUILayout.Space(5);
+                useDefaultDirectory = GUILayout.Toggle(useDefaultDirectory, "Use Default Folder?");
+
+                if (!useDefaultDirectory)
+                {
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Label("Selected Folder: ");
+                    currentDirectory = GUILayout.TextField(currentDirectory, 25);
+                    GUILayout.EndHorizontal();
+                    GUILayout.Space(5);
+                    GUILayout.Label("Note: The specified folder MUST be located inside of the galaxy_tweaker folder.");
+                }
+
+                GUILayout.Space(5);
+
+                if (GUILayout.Button("Open Folder Location") && Directory.Exists(newFolderDirectory))
+                {
+                    Process.Start(newFolderDirectory);
+                }
             }
             else
             {
-                GUILayout.Label("<size=20>Found " + galaxyDefsList.Count + " Galaxy Definitions!</size>");
-            }
-            GUILayout.BeginVertical();
-            scrollbarPos = GUILayout.BeginScrollView(scrollbarPos, false, true, GUILayout.Height(213));
-            foreach (string galaxyDef in galaxyDefsList)
-            {
-                if (GUILayout.Button(galaxyDef))
-                {
-                    galaxyDefinition = galaxyDef;
-                }
-            }
-            GUILayout.EndScrollView();
-            GUILayout.EndVertical();
-
-            //Allows for the use of a different folder inside of galaxy_tweaker for loading Galaxy Definitions from
-            GUILayout.Space(5);
-            useDefaultDirectory = GUILayout.Toggle(useDefaultDirectory, "Use Default Folder?");
-
-            if (!useDefaultDirectory)
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Label("Selected Folder: ");
-                currentDirectory = GUILayout.TextField(currentDirectory, 25);
-                GUILayout.EndHorizontal();
-                GUILayout.Space(5);
-                GUILayout.Label("Note: The specified folder MUST be located inside of the galaxy_tweaker folder.");
+                galaxyDefinition = "GalaxyDefinition_Default.json";
             }
 
             GUILayout.Space(5);
-
-            if (GUILayout.Button("Open Folder Location") && Directory.Exists(newFolderDirectory))
+            useDefaultCelestialData = GUILayout.Toggle(useDefaultCelestialData, "Use Default Celestial Data?");
+            if (!useDefaultCelestialData)
             {
-                Process.Start(newFolderDirectory);
+                GUILayout.Label("wawa");
             }
 
             GUI.DragWindow(new Rect(0, 0, 10000, 500));
@@ -278,7 +299,7 @@ namespace GalaxyTweaker
 
             if (Directory.Exists(loadedDirectory)) //A check to only get files from the loaded directory (folder) if it exists
             {
-                DirectoryInfo galaxyDefFolder = new DirectoryInfo(loadedDirectory);
+                DirectoryInfo galaxyDefFolder = new(loadedDirectory);
 
                 FileInfo[] galaxyDefInfo = galaxyDefFolder.GetFiles("*" + galaxyDefFileType + "*");
 
@@ -326,6 +347,7 @@ namespace GalaxyTweaker
         [HarmonyPrefix]
         public static bool OverrideLoadCelestialBodyDataFilesFlowAction(TextAsset asset, LoadCelestialBodyDataFilesFlowAction __instance)
         {
+            if (useDefaultCelestialData) return true;
             __instance._galaxy = IOProvider.FromJson<SerializedGalaxyDefinition>(asset.text);
             __instance._game.Assets.LoadByLabel<TextAsset>("celestial_bodies", null, delegate (IList<TextAsset> allBodiesTextAssets)
             {
@@ -411,7 +433,7 @@ namespace GalaxyTweaker
         [HarmonyPrefix]
         public static bool PQSOverride(GameObject instance, CelestialBodyBehavior __instance)
         {
-            if (instance == null || __instance == null) return true;
+            if (instance == null || __instance == null || useDefaultCelestialData == true) return true;
 
             instance.TryGetComponent<CoreCelestialBodyData>(out __instance._coreCelestialBodyData);
             //_logger.LogInfo("Here's some celestial body data, let's hope it works:");
@@ -449,9 +471,9 @@ namespace GalaxyTweaker
                 string key = reader.Value.ToString();
                 if (key != "radius") continue;
                 reader.Read();
-                _logger.LogInfo($"Found planet radius of {reader.Value.ToString()} in replacement file, setting radius to that.");
+                _logger.LogInfo($"Found planet radius of {reader.Value} in replacement file, setting radius to that.");
                 data.Data.radius = (double)reader.Value;
-                _logger.LogInfo($"Planet radius is now {data.Data.radius.ToString()}. Hopefully, this is the same as the previous number.");
+                _logger.LogInfo($"Planet radius is now {data.Data.radius}. Hopefully, this is the same as the previous number.");
                 break;
             }
             return data;
