@@ -7,13 +7,8 @@ using UnityEngine;
 using KSP.Game.Load;
 using KSP.Game;
 using SpaceWarp.API.UI;
-using System.Collections.Generic;
-using System;
-using System.IO;
 using System.Diagnostics;
-using KSP.Game.Flow;
 using Newtonsoft.Json;
-using KSP.Assets;
 using KSP.IO;
 using KSP.Sim;
 using KSP.Sim.Definitions;
@@ -48,7 +43,10 @@ namespace GalaxyTweaker
         private static CampaignMenu _campaignMenuInstance = null;
 
         private static bool _isWindowOpen;
-        private Rect _windowRect = new((Screen.width - 600) / 2, (Screen.height - 400) / 2, 600, 400);
+
+        private const int windowWidth = 600;
+        private const int windowHeight = 400;
+        private Rect _windowRect = new((Screen.width - windowWidth) / 2, (Screen.height - windowHeight) / 2, windowWidth, windowHeight);
 
         private string galaxyDefinition = "GalaxyDefinition_Default.json";
         private const string galaxyDefFileType = ".json";
@@ -68,8 +66,9 @@ namespace GalaxyTweaker
 
         // static string startingPlanet = "Karbin";
         static readonly string[] stockCelestialBodies = { "Kerbol", "Moho", "Eve", "Gilly", "Kerbin", "Mun", "Minmus", "Duna", "Ike", "Dres", "Jool", "Laythe", "Vall", "Tylo", "Bop", "Pol", "Eeloo" };
+        
 
-        private static string _activePlanetPack = "Default Pack";
+    private static string _activePlanetPack = "Default Pack";
 
         public override void OnPreInitialized()
         {
@@ -567,13 +566,210 @@ namespace GalaxyTweaker
             }
             while (reader.Read())
             {
+                if (reader.Value == null) continue;
                 string key = reader.Value.ToString();
-                if (key != "radius") continue;
+
+                //    static readonly string[] celestialBodyDataValues = { "assetKeyScaled", "assetKeySimulation", "atmosphereAdiabaticIndex", "atmosphereContainsOxygen", "atmosphereDepth",
+                //"atmosphereMolarMass", "atmospherePressureCurve", "atmospherePressureSeaLevel", "atmosphereTemperatureSeaLevel", "axialTilt", "BodyAltitudeFluxCurve",
+                //"BodyAltitudeRelativeHumidityCurve", "BodyAltitudeSurfaceFluxCurve", "BodyAltitudeTemperatureCurve", "bodyDescription", "bodyDisplayName", "bodyName", "BodySurfaceFluxMapPath",
+                //"BodySurfaceFluxScale", "gravityASL", "hasAtmosphere", "hasInverseRotation", "hasInverseRotationThresholdClamp", "HasLocalSpace", "hasOcean", "hasSolarRotationPeriod",
+                //"hasSolidSurface", "initialRotation", "inverseRotThresholdAltitude", "isHomeWorld", "isRotating", "isStar", "isTidallyLocked", "LocalColonyObjects", "LocalColonyObjectsData",
+                //"LocalSimObjects", "LocalSimObjectsData", "MaxTerrainHeight", "MinTerrainHeight", "navballSwitchAltitudeHigh", "navballSwitchAltitudeLow", "oceanAltitude", "oceanDensity",
+                //"radius", "ringGroupData", "rotationPeriod", "SphereOfInfluenceCalculationType", "StarLuminosity", "TerrainHeightScale", "TimeWarpAltitudeOffset", "useAtmosphereHumidityCurve",
+                //"useAtmospherePressureCurve", "useAtmosphereTemperatureCurve" };
+
                 reader.Read();
-                _logger.LogInfo($"Found planet radius of {reader.Value} in replacement file, setting radius to that.");
-                data.Data.radius = (double)reader.Value;
-                _logger.LogInfo($"Planet radius is now {data.Data.radius}. Hopefully, this is the same as the previous number.");
-                break;
+                var value = reader.Value;
+                switch (key)
+                {
+                    default:
+                        continue;
+                    case "assetKeyScaled":
+                        data.Data.assetKeyScaled = (string)value;
+                        break;
+                    case "assetKeySimulation":
+                        data.Data.assetKeySimulation = (string)value;
+                        break;
+                    case "atmosphereAdiabaticIndex":
+                        data.Data.atmosphereAdiabaticIndex = (double)value;
+                        break;
+                    case "atmosphereContainsOxygen":
+                        data.Data.atmosphereContainsOxygen = (bool)value;
+                        break;
+                    case "atmosphereDepth":
+                        data.Data.atmosphereDepth = (double)value;
+                        break;
+                    case "atmosphereMolarMass":
+                        data.Data.atmosphereMolarMass = (double)value;
+                        break;
+                    case "atmospherePressureCurve":
+                        data.Data.atmospherePressureCurve = (FloatCurve)value;
+                        break;
+                    case "atmospherePressureSeaLevel":
+                        data.Data.atmospherePressureSeaLevel = (double)value;
+                        break;
+                    case "atmosphereTemperatureSeaLevel":
+                        data.Data.atmosphereTemperatureSeaLevel = (double)value;
+                        break;
+                    // this was causing crashes
+                    //case "axialTilt":
+                    //    data.Data.axialTilt = (Vector3d)value;
+                    //    break;
+                    case "BodyAltitudeFluxCurve":
+                        data.Data.BodyAltitudeFluxCurve = (FloatCurve)value;
+                        break;
+                    case "BodyAltitudeRelativeHumidityCurve":
+                        data.Data.BodyAltitudeRelativeHumidityCurve = (FloatCurve)value;
+                        break;
+                    case "BodyAltitudeSurfaceFluxCurve":
+                        data.Data.BodyAltitudeSurfaceFluxCurve = (FloatCurve)value;
+                        break;
+                    case "BodyAltitudeTemperatureCurve":
+                        data.Data.BodyAltitudeTemperatureCurve = (FloatCurve)value;
+                        break;
+                    case "bodyDescription":
+                        data.Data.bodyDescription = (string)value;
+                        break;
+                    case "bodyDisplayName":
+                        data.Data.bodyDisplayName = (string)value;
+                        break;
+                    case "BodySurfaceFluxMapPath":
+                        data.Data.BodySurfaceFluxMapPath = (string)value;
+                        break;
+                    case "BodySurfaceFluxScale":
+                        data.Data.BodySurfaceFluxScale = (double)value;
+                        break;
+                    case "gravityASL":
+                        data.Data.gravityASL = (double)value;
+                        break;
+                    case "hasAtmosphere":
+                        data.Data.hasAtmosphere = (bool)value;
+                        break;
+                    case "hasInverseRotation":
+                        data.Data.hasInverseRotation = (bool)value;
+                        break;
+                    case "hasInverseRotationThresholdClamp":
+                        data.Data.hasInverseRotationThresholdClamp = (bool)value;
+                        break;
+                    case "HasLocalSpace":
+                        data.Data.HasLocalSpace = (bool)value;
+                        break;
+                    case "hasOcean":
+                        data.Data.hasOcean = (bool)value;
+                        break;
+                    case "hasSolarRotationPeriod":
+                        data.Data.hasSolarRotationPeriod = (bool)value;
+                        break;
+                    case "hasSolidSurface":
+                        data.Data.hasSolidSurface = (bool)value;
+                        break;
+                    case "initialRotation":
+                        data.Data.initialRotation = (double)value;
+                        break;
+                    case "inverseRotThresholdAltitude":
+                        data.Data.inverseRotThresholdAltitude = (double)value;
+                        break;
+                    case "isHomeWorld":
+                        data.Data.isHomeWorld = (bool)value;
+                        break;
+                    case "isRotating":
+                        data.Data.isRotating = (bool)value;
+                        break;
+                    case "isStar":
+                        data.Data.isStar = (bool)value;
+                        break;
+                    case "isTidallyLocked":
+                        data.Data.isTidallyLocked = (bool)value;
+                        break;
+                    case "LocalColonyObjects":
+                        data.Data.LocalColonyObjects = (List<PredefinedColonyObject>)value;
+                        break;
+                    case "LocalColonyObjectsData":
+                        data.Data.LocalColonyObjectsData = (List<SerializedPredefinedColonyObject>)value;
+                        break;
+                    case "LocalSimObjects":
+                        data.Data.LocalSimObjects = (List<PredefinedSimObject>)value;
+                        break;
+                    case "LocalSimObjectsData":
+                        data.Data.LocalSimObjectsData = (List<SerializedPredefinedSimObject>)value;
+                        break;
+                    case "MaxTerrainHeight":
+                        data.Data.MaxTerrainHeight = (double)value;
+                        break;
+                    case "MinTerrainHeight":
+                        data.Data.MinTerrainHeight = (double)value;
+                        break;
+                    case "navballSwitchAltitudeHigh":
+                        data.Data.navballSwitchAltitudeHigh = (double)value;
+                        break;
+                    case "navballSwitchAltitudeLow":
+                        data.Data.navballSwitchAltitudeLow = (double)value;
+                        break;
+                    case "oceanAltitude":
+                        data.Data.oceanAltitude = (double)value;
+                        break;
+                    case "oceanDensity":
+                        data.Data.oceanDensity = (double)value;
+                        break;
+                    case "radius":
+                        data.Data.radius = (double)value;
+                        break;
+                    case "ringGroupData":
+                        data.Data.ringGroupData = (List<CelestialBodyRingData>)value;
+                        break;
+                    case "rotationPeriod":
+                        data.Data.rotationPeriod = (double)value;
+                        break;
+                    // this was causing crashes
+                    //case "SphereOfInfluenceCalculationType":
+                    //    data.Data.SphereOfInfluenceCalculationType = (int)value;
+                    //    break;
+                    case "StarLuminosity":
+                        data.Data.StarLuminosity = (double)value;
+                        break;
+                    case "TerrainHeightScale":
+                        data.Data.TerrainHeightScale = (double)value;
+                        break;
+                    case "TimeWarpAltitudeOffset":
+                        data.Data.TimeWarpAltitudeOffset = (double)value;
+                        break;
+                    case "useAtmosphereHumidityCurve":
+                        data.Data.useAtmosphereHumidityCurve = (bool)value;
+                        break;
+                    case "useAtmospherePressureCurve":
+                        data.Data.useAtmospherePressureCurve = (bool)value;
+                        break;
+                    case "useAtmosphereTemperatureCurve":
+                        data.Data.useAtmosphereTemperatureCurve = (bool)value;
+                        break;
+                }
+
+                try
+                {
+                    _logger.LogInfo($"{key} {value}");
+                }
+                catch
+                {
+                    _logger.LogInfo($"Couldn't log {key}.");
+                }
+
+                //int i = 0;
+                //foreach (string celestialBodyValue in celestialBodyDataValues) 
+                //{
+                //    if (key == celestialBodyValue)
+                //    {
+                //        break;
+                //    }
+                //    i++;
+
+                //}
+                //        goto outOfLoop;
+                //reader.Read();
+                //continue;
+
+                //outOfLoop: 
+                //reader.Read();
+                //break;
             }
             return data;
         }
