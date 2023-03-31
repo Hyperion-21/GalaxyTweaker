@@ -1,6 +1,6 @@
 .idea/
 external_dlls/*
-!external_dlls/COPY_Assembly-CSharp_dll_HERE
+!external_dlls/COPY_Assembly-CSharp_dll_AND_Unity_Addressables_dll_HERE
 bin/
 obj/
 Debug/
