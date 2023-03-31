@@ -22,7 +22,7 @@ A galaxy definition is a file that the game uses to determine *where* to place c
 Each celestial body has its own celestial body data file. These determine the physical properties of a celestial body, like planetary radius and atmospheric parameters. Galaxy Tweaker organizes these files into packs.
 
 1. Copy the `Default Pack` folder inside the `CelestialBodyData` folder, and rename it to whatever you want (the name becomes important later, so remember it). DO NOT EDIT THE DEFAULT PACK DIRECTLY, THE MOD USES IT AS A DEFAULT AND IT GETS RESET FREQUENTLY!
-2. Open any of the .json files inside the new pack, and edit it however you want. (WIKI WIP)
+2. Open any of the .json files inside the new pack, and edit it however you want. See wiki below for more detailed explanations of the values inside.
 
 ### Launching
 1. In KSP2, click the "Create New Campaign" button. A window should automatically appear.
@@ -34,7 +34,7 @@ Each celestial body has its own celestial body data file. These determine the ph
 This mod remembers which save file is using which galaxy definition, so the target galaxy definition only works on new save files. Old save files should automatically be assigned to the default galaxy definition stored in the game files (not the `GalaxyDefinition_Default.json` that is automatically generated)
 
 ## Editing Galaxy Definitions
-This section will act as a wiki for what everything in the file actually means.
+This section will act as a wiki for what everything in the galaxy definition file actually means.
 
 ### Overall Advice
 - Do not have the SoI of any celestial body intercept with the SoI of any other body, unless one of the bodies is directly a moon of the other body. If an illegal SoI exists, it causes weird issues when a craft intercepts the intersection, including what seems to be erroneous deloading of celestial bodies and a breakdown of the encounter system.
@@ -111,3 +111,98 @@ The color of the orbital line of the celestial body. `r` is red, `g` is green, `
 }
 ```
 The color of the dot/node on the orbital line of the celestial body. `r` is red, `g` is green, `b` is blue, and `a` is alpha (transparency); all of these values range from 0-1.
+
+## Editing Celestial Body Data
+
+This section will act as a wiki for what everything in celestial body data means.
+
+FOREWARNING: We know considerably less about celestial body data than galaxy definitions. Much of this information is assumed. There's also a lot more here. For the time being, not all values are listed here.
+
+`"bodyName": "Kerbin"`
+
+The ID of the celestial body. Should match the GUID in the galaxy definition.
+
+```json
+"assetKeyScaled": "Celestial.Kerbin.Scaled.prefab",
+"assetKeySimulation": "Celestial.Kerbin.Simulation.prefab"
+```
+
+Determines which bundles of information to read for terrain PQS and visuals. THEORETICALLY, if someone figures out how to create a planet prefab and creates an addressable for that, that address could be used here to effectively load in a new planet.
+
+```json
+"bodyDisplayName": "#autoLOC_910048",
+"bodyDescription": "#autoLOC_900101"
+```
+
+Localization files. Determines some of the written text releated to the planet, like name and description.
+
+`"isStar": false`
+
+Self-explanatory, however it's ambiguous as to what this actually does.
+
+`"isHomeWorld": true`
+
+The starting planet. Highly recommended to not touch this, because Kerbin is very hard-coded to be the default planet, and the game will crash in a million ways if another planet is set as the home world.
+
+```json
+"navballSwitchAltitudeHigh": 36000.0,
+"navballSwitchAltitudeLow": 33000.0
+```
+
+Going above the high value (in meters ASL) from the surface of the celestial body switches the navball to orbit. Going below the low value from space switches the navball to surface.
+
+`"radius": 600000.0`
+
+Planet radius, in meters from the center. CHANGING THIS WILL CAUSE GRAPHICAL GLITCHES AND TERRAIN ISSUES; THIS IS NORMAL. Trying to figure out how to stop these issues from happening is a primary issue that is being looked into.
+
+`"gravityASL": 1.00034160493135`
+
+Gravity in Gs, at sea level. This and radius are the *only* factors that influence a celestial body's gravity.
+
+`"isRotating": true`
+
+Self-explanatory.
+
+`"isTidallyLocked": false`
+
+Sets rotation speed such that one side of the celesttial body always faces its parent body.
+
+`"initialRotation": 90.0`
+
+Starting rotation, in degrees. Unknown what 0 degrees represents.
+
+`"rotationPeriod": 21549.425`
+
+Time in seconds it takes to complete a sidereal year.
+
+```json
+"axialTilt": {
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0.0
+}
+```
+
+The angle, in degrees, that the celestial body's equator is offset from its parent body's equator. All stock planets only use the `x` value. An example would be `"x": 23.4` to set a celestial body's axial tilt to 23.4 degrees.
+
+`"hasAtmosphere": true`
+
+Toggles the *physical* atmosphere of a celestial body. If off, atmosphere graphics still exist, but gameplay-wise the celestial body's air pressure is 0.
+
+`"atmosphereContainsOxygen": true`
+
+Determines if jet engines work.
+
+`"atmosphereDepth": 70000.0`
+
+Value used to determine whether to apply atmospheric effects to a craft, based on altitude ASL in meters.
+
+```json
+"atmospherePressureCurve": {
+    "fCurve": {
+        "serializedVersion": "2",
+        "m_Curve": [
+            {
+```
+
+A float curve that determines atmosphere pressure at altitudes. Float curves are very complex, so expect issues if you try changing these too much.
