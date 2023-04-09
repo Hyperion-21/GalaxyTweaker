@@ -1,19 +1,13 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
-using SpaceWarp;
 using SpaceWarp.API.Mods;
 using UnityEngine;
 using KSP.Game.Load;
 using KSP.Game;
 using SpaceWarp.API.UI;
-using System.Collections.Generic;
-using System;
-using System.IO;
 using System.Diagnostics;
-using KSP.Game.Flow;
 using Newtonsoft.Json;
-using KSP.Assets;
 using KSP.IO;
 using KSP.Sim;
 using KSP.Sim.Definitions;
@@ -23,7 +17,7 @@ using KSP;
 namespace GalaxyTweaker
 {
     [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
-    [BepInDependency(SpaceWarpPlugin.ModGuid, SpaceWarpPlugin.ModVer)]
+    //[BepInDependency(SpaceWarpPlugin.ModGuid, SpaceWarpPlugin.ModVer)]
     public class GalaxyTweakerPlugin : BaseSpaceWarpPlugin
     {
         // These are useful in case some other mod wants to add a dependency to this one
@@ -141,7 +135,7 @@ namespace GalaxyTweaker
 
             if (Game.SaveLoadManager.CampaignExists(Game.SessionManager.ActiveCampaignType, Game.SessionManager.ActiveCampaignName) && !File.Exists(CampaignPath))
             {
-                _logger.LogInfo("USING DEFAULT GALAXYDEFINITION!");
+                _logger.LogInfo("Using default galaxy definition.");
                 GameManager.Instance.Game.Assets.Load<TextAsset>("GalaxyDefinition_Default", asset =>
                     onGalaxyDefinitionLoaded(new TextAsset(asset.text))
                 );
@@ -456,7 +450,6 @@ namespace GalaxyTweaker
                 for (int i = 0; i < allBodiesTextAssets.Count; i++)
                 {
                     allBodiesTextAssets[i] = PlanetReplacer(allBodiesTextAssets[i]);
-                    _logger.LogDebug(allBodiesTextAssets[i].text);
                     CelestialBodyCore celestialBodyCore = IOProvider.FromBuffer<CelestialBodyCore>(allBodiesTextAssets[i].bytes);
                     if (__instance.GalaxyHasBody(celestialBodyCore.data.bodyName))
                     {
@@ -553,7 +546,6 @@ namespace GalaxyTweaker
         public static CoreCelestialBodyData PlanetReplacer2(CoreCelestialBodyData data)
         {
             if (!File.Exists($"{Path}/CelestialBodyData/{_activePlanetPack}/{data.Data.bodyName}.json")) return data;
-            _logger.LogInfo($"Running PlanetReplacer2 on {data.Data.bodyName}");
             JsonTextReader reader = new(new StringReader(File.ReadAllText($"{Path}/CelestialBodyData/{_activePlanetPack}/{data.Data.bodyName}.json")));
             while (reader.Read())
             {
@@ -570,9 +562,7 @@ namespace GalaxyTweaker
                 string key = reader.Value.ToString();
                 if (key != "radius") continue;
                 reader.Read();
-                _logger.LogInfo($"Found planet radius of {reader.Value} in replacement file, setting radius to that.");
                 data.Data.radius = (double)reader.Value;
-                _logger.LogInfo($"Planet radius is now {data.Data.radius}. Hopefully, this is the same as the previous number.");
                 break;
             }
             return data;
